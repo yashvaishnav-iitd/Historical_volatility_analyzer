@@ -16,11 +16,6 @@ ENV/
 # Environment variables & local configuration
 .env
 
-# Generated Output / Plot Images
-*.png
-*.jpg
-*.jpeg
-*.svg
 
 # OS generated files
 Thumbs.db

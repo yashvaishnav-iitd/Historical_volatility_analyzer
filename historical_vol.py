@@ -140,6 +140,8 @@ if __name__ == "__main__":
     data.columns = data.columns.get_level_values(0)
     
     results = calculate_all_volatilities(data,mode=Mode.VALS)
-    print (results)
+    print("\n=== AAPL 1-Year Volatility Estimator Comparison ===")
+    for model, val in results.items():
+        print(f"{model:<15}: {val:.4f} ({val*100:.2f}%)")
     
     plot_rolling_estimators(data)
