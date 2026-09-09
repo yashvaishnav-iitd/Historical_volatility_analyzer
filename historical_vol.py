@@ -100,7 +100,7 @@ def calculate_all_volatilities(df, mode : Mode, window =30):
             "Yang-Zhang": yz_rolling
         }
 
-def plot_rolling_estimators(df, window=30):
+def plot_rolling_estimators(df, ticker, window=30):
     N = len(df)
     
     dit = calculate_all_volatilities(df,mode=Mode.PLOTS, window=window)
@@ -119,7 +119,7 @@ def plot_rolling_estimators(df, window=30):
     plt.plot(gk_rolling, label="Garman-Klass", color="green", linestyle="-.")
     plt.plot(yz_rolling, label="Yang-Zhang", color="crimson", linewidth=1.8)
     
-    plt.title(f"AAPL {window}-Day Rolling Historical Volatility Estimators")
+    plt.title(f"{ticker} {window}-Day Rolling Historical Volatility Estimators")
     plt.xlabel("Date")
     plt.ylabel("Annualized Volatility")
     plt.legend()
@@ -128,20 +128,27 @@ def plot_rolling_estimators(df, window=30):
 
 
 ########################### TO NOT SAVE THE PLOT -> COMMENT THE NEXT LINE ############################
-    plt.savefig("aapl_estimator_comparison.png", dpi=150)
+    plt.savefig(f"{ticker}_estimator_comparison.png", dpi=150)
 
 
     plt.show()
 
-    
-# Test on AAPL
+
+# For Testing    
 if __name__ == "__main__":
-    data = yf.download("AAPL", period="1y")
+
+    ticker = input("Enter ticker symbol (e.g. AAPL, MSFT, TSLA): ").strip().upper()
+    data = yf.download(ticker, period="1y")
+
+
+    if data.empty:
+        raise ValueError(f"No data found for ticker '{ticker}' — check the symbol is correct.")
+
     data.columns = data.columns.get_level_values(0)
     
     results = calculate_all_volatilities(data,mode=Mode.VALS)
-    print("\n=== AAPL 1-Year Volatility Estimator Comparison ===")
+    print(f"\n=== {ticker} 1-Year Volatility Estimator Comparison ===")
     for model, val in results.items():
         print(f"{model:<15}: {val:.4f} ({val*100:.2f}%)")
     
-    plot_rolling_estimators(data)
+    plot_rolling_estimators(data,ticker)
