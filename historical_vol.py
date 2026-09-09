@@ -12,12 +12,6 @@ class Mode(Enum):
 
 
 
-# Embedded standalone pricing function to keep P2 independent
-def black_scholes_call(S, K, T, r, sigma):
-    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
-    d2 = d1 - sigma * np.sqrt(T)
-    return S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
-
 
 
 def calculate_all_volatilities(df, mode : Mode, window =30):
@@ -133,8 +127,8 @@ def plot_rolling_estimators(df, window=30):
     plt.tight_layout()
 
 
-########################### TO SAVE THE PLOT -> UNCOMMENT THE NEXT LINE ############################
-    #plt.savefig("aapl_estimator_comparison.png", dpi=150)
+########################### TO NOT SAVE THE PLOT -> COMMENT THE NEXT LINE ############################
+    plt.savefig("aapl_estimator_comparison.png", dpi=150)
 
 
     plt.show()
@@ -146,5 +140,6 @@ if __name__ == "__main__":
     data.columns = data.columns.get_level_values(0)
     
     results = calculate_all_volatilities(data,mode=Mode.VALS)
+    print (results)
     
     plot_rolling_estimators(data)
