@@ -131,7 +131,12 @@ def plot_rolling_estimators(df, window=30):
     plt.legend()
     plt.grid(True, linestyle=":", alpha=0.6)
     plt.tight_layout()
-    plt.savefig("aapl_estimator_comparison.png", dpi=150)
+
+
+########################### TO SAVE THE PLOT -> UNCOMMENT THE NEXT LINE ############################
+    #plt.savefig("aapl_estimator_comparison.png", dpi=150)
+
+
     plt.show()
 
     
