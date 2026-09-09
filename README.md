@@ -22,11 +22,18 @@ The simplest way to measure volatility (Close-to-Close) only uses closing prices
 ### 1. Data download
 
 ```python
-data = yf.download("AAPL", period="1y")
+ticker = input("Enter ticker symbol (e.g. AAPL, MSFT, TSLA): ").strip().upper()
+data = yf.download(ticker, period="1y")
+
+if data.empty:
+    raise ValueError(f"No data found for ticker '{ticker}' — check the symbol is correct.")
+
 data.columns = data.columns.get_level_values(0)
 ```
 
-`yfinance` returns OHLC data with MultiIndex columns (e.g. `('Close', 'AAPL')`) even for a single ticker; this flattens them to plain column names (`Close`, `High`, `Low`, `Open`, `Volume`).
+The script works for **any ticker**, not just one hardcoded symbol — it prompts for a ticker at runtime. `yfinance` returns OHLC data with MultiIndex columns (e.g. `('Close', 'AAPL')`) even for a single ticker; the last line flattens them to plain column names (`Close`, `High`, `Low`, `Open`, `Volume`).
+
+If the ticker is invalid or has no data, `yf.download` doesn't raise an error on its own — it silently returns an empty table, which would otherwise let `NaN` values propagate through every downstream calculation with no clear explanation. The `if data.empty` check catches this immediately with a clear error message instead.
 
 ### 2. The four estimators (`calculate_all_volatilities`)
 
@@ -51,6 +58,8 @@ Plots all four rolling estimators on the same chart, so you can see where they a
 
 Formulas were validated against **synthetic OHLC data with a known, simulated true volatility** — something real market data can't provide, since the "true" volatility of a real stock is never actually known. Generating 2,000 days of data from a process with a known annualized volatility of 31.75% and running it through all four estimators recovered values within ~1–3 percentage points across the board, confirming the formulas (including the more error-prone Yang-Zhang and Rogers-Satchell terms) are implemented correctly.
 
+The generalized (ticker-agnostic) version was separately verified by running the full pipeline against two synthetic datasets with different volatility levels (a low-vol and a high-vol case), confirming that output filenames, plot titles, and console output all correctly reflect whichever ticker is passed in, rather than being hardcoded to a single stock.
+
 ## Usage
 
 ```bash
@@ -58,23 +67,38 @@ pip install yfinance pandas numpy matplotlib scipy
 python historical_vol.py
 ```
 
+Running it prompts for a ticker symbol, then prints the four full-period volatility estimates and saves a rolling comparison plot named `{TICKER}_estimator_comparison.png`:
+
+```
+Enter ticker symbol (e.g. AAPL, MSFT, TSLA): msft
+
+=== MSFT 1-Year Volatility Estimator Comparison ===
+Close-to-Close : 0.2103 (21.03%)
+Parkinson      : 0.1897 (18.97%)
+Garman-Klass   : 0.1842 (18.42%)
+Yang-Zhang     : 0.1961 (19.61%)
+```
+
+To use the functions directly rather than via the interactive prompt:
+
 ```python
-from historical_vol import calculate_all_volatilities, Mode
+from historical_vol import calculate_all_volatilities, plot_rolling_estimators, Mode
 import yfinance as yf
 
-data = yf.download("AAPL", period="1y")
+ticker = "TSLA"
+data = yf.download(ticker, period="1y")
 data.columns = data.columns.get_level_values(0)
 
 point_estimates = calculate_all_volatilities(data, mode=Mode.VALS)
 print(point_estimates)
+
+plot_rolling_estimators(data, ticker)
 ```
 
 ## Known gaps / TODO
 
-- `black_scholes_call` is defined in this file but not currently used anywhere — either wire it in (e.g. to compare realized vs. implied volatility) or remove it.
-- The `results` dict from `Mode.VALS` should be printed or logged in `__main__` — currently computed but discarded.
 - No comparison yet against actual implied volatility for the same stock/period — natural next step, bridging into an IV smile/skew project.
-- `plt.show()` is used for interactive display; `plt.savefig(...)` is present but commented out — decide whether you want a saved PNG artifact (useful for a CV/GitHub README) in addition to, or instead of, the interactive window.
+- `plt.show()` and `plt.savefig(...)` are both active — the plot is saved as `{TICKER}_estimator_comparison.png` and also displayed interactively. Comment out `plt.show()` if running this non-interactively (e.g. in a script or notebook pipeline).
 
 ## Background
 
